@@ -1,0 +1,509 @@
+{
+  "info": {
+    "name": "Gestión de eventos - 20 solicitudes",
+    "description": "Ejecutar las carpetas en orden con el Collection Runner. Los datos de cada ejecución llevan el sufijo run_id para no chocar con ejecuciones anteriores. Configure las contraseñas (password_admin, password_organizador, password_consulta) en el entorno local de Postman, con los valores usados en seed_demo.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "run_id", "value": "" },
+    { "key": "fecha_futura", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "01 Autenticación de los tres perfiles",
+      "item": [
+        {
+          "name": "Token admin",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/api/token/",
+            "description": "Obtiene el token del administrador.\n\nRespuesta esperada: HTTP 200.",
+            "body": { "mode": "raw", "raw": "{\"username\": \"admin_demo\", \"password\": \"{{password_admin}}\"}", "options": { "raw": { "language": "json" } } }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('run_id', Date.now().toString() + '-' + Math.floor(Math.random()*100000));",
+                  "pm.collectionVariables.set('fecha_futura', new Date(Date.now()+45*86400000).toISOString());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });",
+                  "if (pm.response.code === 200) pm.collectionVariables.set('token_admin', pm.response.json()['token']);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Token organizador",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/api/token/",
+            "description": "Obtiene el token del organizador.\n\nRespuesta esperada: HTTP 200.",
+            "body": { "mode": "raw", "raw": "{\"username\": \"organizador_demo\", \"password\": \"{{password_organizador}}\"}", "options": { "raw": { "language": "json" } } }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });",
+                  "if (pm.response.code === 200) pm.collectionVariables.set('token_organizador', pm.response.json()['token']);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Token consulta",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/api/token/",
+            "description": "Obtiene el token del perfil de consulta.\n\nRespuesta esperada: HTTP 200.",
+            "body": { "mode": "raw", "raw": "{\"username\": \"consulta_demo\", \"password\": \"{{password_consulta}}\"}", "options": { "raw": { "language": "json" } } }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });",
+                  "if (pm.response.code === 200) pm.collectionVariables.set('token_consulta', pm.response.json()['token']);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 Crear datos de esta ejecución",
+      "item": [
+        {
+          "name": "Crear evento",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Token {{token_admin}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{base_url}}/api/eventos/",
+            "description": "Crea un evento con cupo 2 y presupuesto 1000.00.\n\nRespuesta esperada: HTTP 201.",
+            "body": { "mode": "raw", "raw": "{\"nombre\": \"Feria {{run_id}}\", \"fecha\": \"{{fecha_futura}}\", \"lugar\": \"Puntarenas\", \"cupo\": 2, \"presupuesto\": \"1000.00\", \"estado\": \"ABIERTO\"}", "options": { "raw": { "language": "json" } } }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201', function () { pm.response.to.have.status(201); });",
+                  "if (pm.response.code === 201) pm.collectionVariables.set('evento_id', pm.response.json()['id']);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear participante 1",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Token {{token_admin}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{base_url}}/api/participantes/",
+            "description": "Crea el primer participante.\n\nRespuesta esperada: HTTP 201.",
+            "body": { "mode": "raw", "raw": "{\"nombre\": \"Persona 1 {{run_id}}\", \"correo\": \"persona1@example.com\", \"cedula\": \"PM-1-{{run_id}}\"}", "options": { "raw": { "language": "json" } } }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201', function () { pm.response.to.have.status(201); });",
+                  "if (pm.response.code === 201) pm.collectionVariables.set('participante1_id', pm.response.json()['id']);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear participante 2",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Token {{token_admin}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{base_url}}/api/participantes/",
+            "description": "Crea el segundo participante.\n\nRespuesta esperada: HTTP 201.",
+            "body": { "mode": "raw", "raw": "{\"nombre\": \"Persona 2 {{run_id}}\", \"correo\": \"persona2@example.com\", \"cedula\": \"PM-2-{{run_id}}\"}", "options": { "raw": { "language": "json" } } }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201', function () { pm.response.to.have.status(201); });",
+                  "if (pm.response.code === 201) pm.collectionVariables.set('participante2_id', pm.response.json()['id']);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear proveedor 1",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Token {{token_admin}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{base_url}}/api/proveedores/",
+            "description": "Crea un proveedor de sonido.\n\nRespuesta esperada: HTTP 201.",
+            "body": { "mode": "raw", "raw": "{\"nombre\": \"Empresa 1 {{run_id}}\", \"servicio\": \"Sonido\", \"contacto\": \"demo@example.com\"}", "options": { "raw": { "language": "json" } } }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201', function () { pm.response.to.have.status(201); });",
+                  "if (pm.response.code === 201) pm.collectionVariables.set('proveedor1_id', pm.response.json()['id']);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 Inscripciones, cupo y reglas de negocio",
+      "item": [
+        {
+          "name": "Inscribir primera persona",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Token {{token_admin}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{base_url}}/api/inscripciones/",
+            "description": "Inscribe al participante 1 en el evento.\n\nRespuesta esperada: HTTP 201.",
+            "body": { "mode": "raw", "raw": "{\"evento\": \"{{evento_id}}\", \"participante\": \"{{participante1_id}}\"}", "options": { "raw": { "language": "json" } } }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201', function () { pm.response.to.have.status(201); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Rechazar inscripción duplicada",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Token {{token_admin}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{base_url}}/api/inscripciones/",
+            "description": "Regla de negocio: un participante no se inscribe dos veces al mismo evento.\n\nRespuesta esperada: HTTP 400.",
+            "body": { "mode": "raw", "raw": "{\"evento\": \"{{evento_id}}\", \"participante\": \"{{participante1_id}}\"}", "options": { "raw": { "language": "json" } } }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Completar cupo",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Token {{token_admin}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{base_url}}/api/inscripciones/",
+            "description": "Inscribe al participante 2 y deja el evento con el cupo lleno.\n\nRespuesta esperada: HTTP 201.",
+            "body": { "mode": "raw", "raw": "{\"evento\": \"{{evento_id}}\", \"participante\": \"{{participante2_id}}\"}", "options": { "raw": { "language": "json" } } }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201', function () { pm.response.to.have.status(201); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Rechazar reducción de cupo PATCH",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Token {{token_admin}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{base_url}}/api/eventos/{{evento_id}}/",
+            "description": "Regla de negocio: el cupo no puede quedar por debajo de los inscritos activos (también en PATCH).\n\nRespuesta esperada: HTTP 400.",
+            "body": { "mode": "raw", "raw": "{\"cupo\": 1}", "options": { "raw": { "language": "json" } } }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Impedir borrar evento con inscripciones",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Token {{token_admin}}" }],
+            "url": "{{base_url}}/api/eventos/{{evento_id}}/",
+            "description": "Un evento con inscripciones no se puede eliminar.\n\nRespuesta esperada: HTTP 409."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 409', function () { pm.response.to.have.status(409); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04 Contrataciones y consultas",
+      "item": [
+        {
+          "name": "Contratar primer proveedor",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Token {{token_admin}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{base_url}}/api/presupuesto/",
+            "description": "Contrata al proveedor 1 por 600.00, dentro del presupuesto del evento.\n\nRespuesta esperada: HTTP 201.",
+            "body": { "mode": "raw", "raw": "{\"evento\": \"{{evento_id}}\", \"proveedor\": \"{{proveedor1_id}}\", \"monto\": \"600.00\"}", "options": { "raw": { "language": "json" } } }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201', function () { pm.response.to.have.status(201); });",
+                  "if (pm.response.code === 201) pm.collectionVariables.set('contrato1_id', pm.response.json()['id']);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Eventos con filtros combinados y orden",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Token {{token_admin}}" }],
+            "url": "{{base_url}}/api/eventos/?estado=ABIERTO&lugar=Puntarenas&search={{run_id}}&ordering=-presupuesto&page=1",
+            "description": "Filtros combinables (estado y lugar), búsqueda, ordenamiento y paginación.\n\nRespuesta esperada: HTTP 200."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Un evento de esta ejecución', () => pm.expect(pm.response.json().total_registros).to.eql(1));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Inscripciones por evento y estado",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Token {{token_admin}}" }],
+            "url": "{{base_url}}/api/inscripciones/?evento={{evento_id}}&estado=ACTIVA",
+            "description": "Filtros combinados por evento y estado, con listado paginado.\n\nRespuesta esperada: HTTP 200."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "05 Permisos por perfil",
+      "item": [
+        {
+          "name": "Acceso sin token",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/api/eventos/",
+            "description": "Sin token no hay acceso.\n\nRespuesta esperada: HTTP 401."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 401', function () { pm.response.to.have.status(401); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Consulta no puede crear",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Token {{token_consulta}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{base_url}}/api/eventos/",
+            "description": "El perfil de consulta es solo de lectura.\n\nRespuesta esperada: HTTP 403.",
+            "body": { "mode": "raw", "raw": "{\"nombre\": \"Feria {{run_id}}\", \"fecha\": \"{{fecha_futura}}\", \"lugar\": \"Puntarenas\", \"cupo\": 2, \"presupuesto\": \"1000.00\", \"estado\": \"ABIERTO\"}", "options": { "raw": { "language": "json" } } }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 403', function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Organizador puede gestionar proveedor",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Token {{token_organizador}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{base_url}}/api/proveedores/{{proveedor1_id}}/",
+            "description": "El organizador gestiona proveedores.\n\nRespuesta esperada: HTTP 200.",
+            "body": { "mode": "raw", "raw": "{\"contacto\": \"organizador@example.com\"}", "options": { "raw": { "language": "json" } } }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "06 Eliminar contratación",
+      "item": [
+        {
+          "name": "Eliminar contratación",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Token {{token_admin}}" }],
+            "url": "{{base_url}}/api/presupuesto/{{contrato1_id}}/",
+            "description": "Elimina la contratación creada en esta ejecución.\n\nRespuesta esperada: HTTP 204."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 204', function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Contratación eliminada devuelve 404",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Token {{token_admin}}" }],
+            "url": "{{base_url}}/api/presupuesto/{{contrato1_id}}/",
+            "description": "La contratación ya no existe.\n\nRespuesta esperada: HTTP 404."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 404', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
