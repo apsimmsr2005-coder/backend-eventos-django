@@ -1,22 +1,20 @@
-"""
-URL configuration for eventos_backend project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/5.2/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
 from django.contrib import admin
-from django.urls import path
+from django.urls import include, path
+from . import views
+from eventos.views import resumen_api
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/token/', views.token_api, name='api_token'),
+    path('api/logout/', views.logout_api, name='api_logout'),
+    path('api/me/', views.usuario_api, name='api_usuario'),
+    path('api/reportes/resumen/', resumen_api, name='api_resumen'),
+    path('api/eventos/', include('eventos.urls')),
+    path('api/participantes/', include('participantes.urls')),
+    path('api/inscripciones/', include('inscripciones.urls')),
+    path('api/proveedores/', include('proveedores.urls')),
+    path('api/presupuesto/', include('presupuesto.urls')),
 ]
+handler400 = 'eventos_backend.errors.bad_request'
+handler404 = 'eventos_backend.errors.not_found'
+handler500 = 'eventos_backend.errors.server_error'
