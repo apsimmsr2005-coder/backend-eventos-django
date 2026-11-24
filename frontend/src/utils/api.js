@@ -1,5 +1,5 @@
 // URL base de la API de Gestión de Eventos (usa proxy local o directo)
-export const API_BASE = '/api';
+export const API_BASE = import.meta.env.VITE_API_URL ?? '/api';
 
 /** Headers para peticiones autenticadas */
 export function encabezadosAuth(token) {
