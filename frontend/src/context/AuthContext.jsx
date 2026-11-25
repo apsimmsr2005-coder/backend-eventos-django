@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import { API_BASE } from '../utils/api';
 
 const AuthContext = createContext(null);
@@ -10,12 +10,32 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
     const [token, setToken] = useState(() => localStorage.getItem('token') ?? '');
     const [usuario, setUsuario] = useState(() => localStorage.getItem('usuario') ?? '');
+    const [aviso, setAviso] = useState('');
+
+    function limpiarSesion() {
+        localStorage.removeItem('token');
+        localStorage.removeItem('usuario');
+        setToken('');
+        setUsuario('');
+    }
+
+    // Si cualquier llamada a la API recibe 401, apiFetch dispara este evento:
+    // se limpia la sesión y RutaProtegida redirige al login.
+    useEffect(() => {
+        function alExpirar() {
+            limpiarSesion();
+            setAviso('Su sesión expiró o el token no es válido. Inicie sesión de nuevo.');
+        }
+        window.addEventListener('sesion-expirada', alExpirar);
+        return () => window.removeEventListener('sesion-expirada', alExpirar);
+    }, []);
 
     function login(nuevoToken, nombreUsuario) {
         localStorage.setItem('token', nuevoToken);
         localStorage.setItem('usuario', nombreUsuario);
         setToken(nuevoToken);
         setUsuario(nombreUsuario);
+        setAviso('');
     }
 
     async function logout() {
@@ -30,14 +50,11 @@ export function AuthProvider({ children }) {
         } catch {
             // Sin conexión: igual se limpia la sesión local.
         }
-        localStorage.removeItem('token');
-        localStorage.removeItem('usuario');
-        setToken('');
-        setUsuario('');
+        limpiarSesion();
     }
 
     return (
-        <AuthContext.Provider value={{ token, usuario, login, logout }}>
+        <AuthContext.Provider value={{ token, usuario, aviso, login, logout }}>
             {children}
         </AuthContext.Provider>
     );

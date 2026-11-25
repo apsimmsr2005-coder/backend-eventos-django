@@ -10,7 +10,7 @@ const TOKEN_URL = `${API_BASE}/token/`;
  * Si ya hay sesión, redirige al dashboard.
  */
 export default function Login() {
-    const { token, login } = useAuth();
+    const { token, aviso, login } = useAuth();
     const navigate = useNavigate();
     const [credenciales, setCredenciales] = useState({ username: '', password: '' });
     const [autenticando, setAutenticando] = useState(false);
@@ -73,6 +73,12 @@ export default function Login() {
                     style={{ borderRadius: 16, padding: '28px 32px' }}
                 >
                     <h2 className="h5 text-center mb-4 fw-semibold text-dark">Iniciar sesión</h2>
+
+                    {aviso && !error && (
+                        <div className="alert alert-warning py-2 mb-3" style={{ fontSize: '.9rem' }}>
+                            {aviso}
+                        </div>
+                    )}
 
                     {error && (
                         <div className="alert alert-danger py-2 mb-3" style={{ fontSize: '.9rem' }}>
