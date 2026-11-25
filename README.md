@@ -154,6 +154,10 @@ Los listados son paginados y admiten filtros, por ejemplo `/api/eventos/?estado=
 
 ## 13. Pruebas automatizadas
 
+Antes de correr es necesario ejecutar el siguiente comando en MySQL:
+GRANT ALL PRIVILEGES ON test_gestion_eventos.* TO 'eventos_app'@'localhost';
+FLUSH PRIVILEGES;
+
 ```bash
 python manage.py test tests -v 2
 ```
