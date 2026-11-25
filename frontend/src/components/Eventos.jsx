@@ -23,6 +23,9 @@ export default function Eventos({ token }) {
     const [pagina, setPagina] = useState(1);
     const [totalPaginas, setTotalPaginas] = useState(1);
     const [filtroEstado, setFiltroEstado] = useState('');
+    const [textoBusqueda, setTextoBusqueda] = useState('');   // lo que se escribe
+    const [busqueda, setBusqueda] = useState('');             // lo que se envía al backend
+    const [orden, setOrden] = useState('fecha');
     const [cargando, setCargando] = useState(true);
     const [procesando, setProcesando] = useState(false);
     const [error, setError] = useState('');
@@ -32,7 +35,7 @@ export default function Eventos({ token }) {
     const [panelInscripciones, setPanelInscripciones] = useState(null);
     const [panelPresupuesto, setPanelPresupuesto] = useState(null);
 
-    useEffect(() => { cargar(pagina, filtroEstado); }, [pagina, filtroEstado]);
+    useEffect(() => { cargar(pagina, filtroEstado); }, [pagina, filtroEstado, busqueda, orden]);
 
     async function cargar(pag, estado) {
         try {
@@ -40,6 +43,8 @@ export default function Eventos({ token }) {
             setError('');
             const params = new URLSearchParams({ page: pag });
             if (estado) params.append('estado', estado);
+            if (busqueda) params.append('search', busqueda);   // busca en nombre y lugar
+            params.append('ordering', orden);                   // ej. fecha, -presupuesto
             const r = await apiFetch(`${API_URL}?${params}`, {
                 headers: { Authorization: `Token ${token}` },
             });
@@ -160,6 +165,18 @@ export default function Eventos({ token }) {
         }
     }
 
+    function buscar(e) {
+        e.preventDefault();
+        setBusqueda(textoBusqueda.trim());
+        setPagina(1);
+    }
+
+    function limpiarBusqueda() {
+        setTextoBusqueda('');
+        setBusqueda('');
+        setPagina(1);
+    }
+
     return (
         <section>
             {/* Cabecera */}
@@ -179,6 +196,58 @@ export default function Eventos({ token }) {
                         {ESTADOS.map((e) => <option key={e} value={e}>{e}</option>)}
                     </select>
                 </div>
+            </div>
+
+            {/* Búsqueda y ordenamiento (los procesa el backend) */}
+            <div className="card card-body shadow-sm mb-3" style={{ borderRadius: 12 }}>
+                <div className="row g-2 align-items-end">
+                    <form className="col-md-7" onSubmit={buscar}>
+                        <label className="form-label small fw-semibold text-secondary" htmlFor="buscar-evento">
+                            BUSCAR POR NOMBRE O LUGAR
+                        </label>
+                        <div className="input-group input-group-sm">
+                            <input
+                                id="buscar-evento"
+                                type="search"
+                                className="form-control"
+                                placeholder="Ej.: congreso, auditorio…"
+                                value={textoBusqueda}
+                                onChange={(e) => setTextoBusqueda(e.target.value)}
+                            />
+                            <button className="btn btn-primary" type="submit">Buscar</button>
+                            {busqueda && (
+                                <button className="btn btn-outline-secondary" type="button" onClick={limpiarBusqueda}>
+                                    Limpiar
+                                </button>
+                            )}
+                        </div>
+                    </form>
+                    <div className="col-md-5">
+                        <label className="form-label small fw-semibold text-secondary" htmlFor="ordenar-eventos">
+                            ORDENAR POR
+                        </label>
+                        <select
+                            id="ordenar-eventos"
+                            className="form-select form-select-sm"
+                            value={orden}
+                            onChange={(e) => { setOrden(e.target.value); setPagina(1); }}
+                        >
+                            <option value="fecha">Fecha (más próxima primero)</option>
+                            <option value="-fecha">Fecha (más lejana primero)</option>
+                            <option value="nombre">Nombre (A–Z)</option>
+                            <option value="-nombre">Nombre (Z–A)</option>
+                            <option value="-presupuesto">Presupuesto (mayor a menor)</option>
+                            <option value="presupuesto">Presupuesto (menor a mayor)</option>
+                            <option value="-cupo">Cupo (mayor a menor)</option>
+                            <option value="cupo">Cupo (menor a mayor)</option>
+                        </select>
+                    </div>
+                </div>
+                {busqueda && (
+                    <small className="text-muted mt-2">
+                        Resultados para «{busqueda}»
+                    </small>
+                )}
             </div>
 
             {mensaje && <div className="alert alert-success py-2">{mensaje}</div>}
