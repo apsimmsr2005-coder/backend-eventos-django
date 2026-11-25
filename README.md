@@ -176,9 +176,9 @@ En la carpeta `postman/` están la colección (`gestion_eventos.postman_collecti
 
 | Integrante | Módulos a cargo |
 |---|---|
-| Integrante A | `eventos`, `presupuesto` |
-| Integrante B | `participantes`, `inscripciones` |
-| Integrante C | `proveedores`, seguridad (roles y tokens) |
+| Alanis Lemaitre Fallas | `eventos`, `presupuesto` |
+| Antony Simms Rodríguez | `participantes`, `inscripciones` |
+| Melany Salazar Castillo | `proveedores`, seguridad (roles y tokens) |
 
 El código se revisó de forma cruzada mediante pull requests.
 
