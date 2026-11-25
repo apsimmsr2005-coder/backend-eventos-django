@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { API_BASE, encabezadosAuth, obtenerMensajeError } from '../utils/api';
+import { API_BASE, apiFetch, encabezadosAuth, obtenerMensajeError } from '../utils/api';
 
 const PROVEEDORES_URL = `${API_BASE}/proveedores/`;
 const CONTRATACIONES_URL = `${API_BASE}/presupuesto/`;
@@ -41,20 +41,20 @@ export default function Presupuesto({ evento, token, onCerrar, onActualizado }) 
     }
 
     async function obtenerPresupuesto() {
-        const r = await fetch(`${API_BASE}/eventos/${evento.id}/presupuesto/`, {
+        const r = await apiFetch(`${API_BASE}/eventos/${evento.id}/presupuesto/`, {
             headers: { Authorization: `Token ${token}` },
         });
-        if (!r.ok) throw new Error(`Error al consultar presupuesto: ${r.status}`);
+        if (!r.ok) throw new Error(await obtenerMensajeError(r, 'No se pudo consultar el presupuesto'));
         return r.json();
     }
 
     async function obtenerTodosProveedores() {
         let pag = 1, total = 1, todos = [];
         do {
-            const r = await fetch(`${PROVEEDORES_URL}?page=${pag}`, {
+            const r = await apiFetch(`${PROVEEDORES_URL}?page=${pag}`, {
                 headers: { Authorization: `Token ${token}` },
             });
-            if (!r.ok) throw new Error('No se pudieron cargar los proveedores');
+            if (!r.ok) throw new Error(await obtenerMensajeError(r, 'No se pudieron cargar los proveedores'));
             const res = await r.json();
             todos = [...todos, ...(res.resultados ?? res)];
             total = res.total_paginas ?? 1;
@@ -79,7 +79,7 @@ export default function Presupuesto({ evento, token, onCerrar, onActualizado }) 
 
         try {
             setProcesando(true);
-            const r = await fetch(CONTRATACIONES_URL, {
+            const r = await apiFetch(CONTRATACIONES_URL, {
                 method: 'POST',
                 headers: encabezadosAuth(token),
                 body: JSON.stringify({
@@ -114,7 +114,7 @@ export default function Presupuesto({ evento, token, onCerrar, onActualizado }) 
             setProcesando(true);
             setError('');
             setMensaje('');
-            const r = await fetch(`${CONTRATACIONES_URL}${id}/`, {
+            const r = await apiFetch(`${CONTRATACIONES_URL}${id}/`, {
                 method: 'DELETE',
                 headers: { Authorization: `Token ${token}` },
             });

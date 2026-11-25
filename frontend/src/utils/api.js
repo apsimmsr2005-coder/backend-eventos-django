@@ -9,11 +9,50 @@ export function encabezadosAuth(token) {
     };
 }
 
+/** Mensajes claros por código HTTP (se usan si Django no manda uno propio). */
+const MENSAJES_HTTP = {
+    400: 'Hay datos inválidos. Revise el formulario.',
+    401: 'Su sesión expiró o no es válida. Inicie sesión de nuevo.',
+    403: 'Su perfil no tiene permiso para esta operación.',
+    404: 'El registro no existe o fue eliminado.',
+    409: 'No se puede completar: el registro tiene datos relacionados.',
+};
+
+/**
+ * apiFetch — único punto para llamar a la API.
+ * - Agrega el token guardado en la sesión.
+ * - Si Django responde 401, avisa al AuthContext para cerrar la sesión.
+ * - Si no hay conexión, lanza un error comprensible.
+ */
+export async function apiFetch(url, opciones = {}) {
+    const token = localStorage.getItem('token');
+    const headers = { ...(opciones.headers || {}) };
+    if (token) headers.Authorization = `Token ${token}`;
+
+    let respuesta;
+    try {
+        respuesta = await fetch(url, { ...opciones, headers });
+    } catch {
+        throw new Error('No se pudo conectar con el servidor. Verifique que el backend esté encendido.');
+    }
+    if (respuesta.status === 401) {
+        window.dispatchEvent(new Event('sesion-expirada'));
+    }
+    return respuesta;
+}
+
 /**
  * Convierte la respuesta de error de Django en texto legible.
  * Maneja tanto { detail: "...", errores: { campo: [...] } } como errores directos.
  */
 export async function obtenerMensajeError(respuesta, porDefecto) {
+    // 401 y 403 siempre con mensaje fijo y claro
+    if (respuesta.status === 401 || respuesta.status === 403) {
+        return MENSAJES_HTTP[respuesta.status];
+    }
+    porDefecto = MENSAJES_HTTP[respuesta.status] && respuesta.status !== 400
+        ? `${porDefecto}: ${MENSAJES_HTTP[respuesta.status]}`
+        : porDefecto;
     try {
         const datos = await respuesta.json();
         

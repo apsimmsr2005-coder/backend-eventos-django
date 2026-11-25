@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import EventoCard from './EventoCard';
 import Inscripciones from './Inscripciones';
 import Presupuesto from './Presupuesto';
-import { API_BASE, encabezadosAuth, obtenerMensajeError, aFechaHoraLocal } from '../utils/api';
+import { API_BASE, apiFetch, encabezadosAuth, obtenerMensajeError, aFechaHoraLocal } from '../utils/api';
 
 const API_URL = `${API_BASE}/eventos/`;
 
@@ -40,10 +40,10 @@ export default function Eventos({ token }) {
             setError('');
             const params = new URLSearchParams({ page: pag });
             if (estado) params.append('estado', estado);
-            const r = await fetch(`${API_URL}?${params}`, {
+            const r = await apiFetch(`${API_URL}?${params}`, {
                 headers: { Authorization: `Token ${token}` },
             });
-            if (!r.ok) throw new Error(`Error HTTP: ${r.status}`);
+            if (!r.ok) throw new Error(await obtenerMensajeError(r, 'No se pudieron cargar los eventos'));
             const datos = await r.json();
             setEventos(datos.resultados);
             setTotalPaginas(datos.total_paginas);
@@ -86,7 +86,7 @@ export default function Eventos({ token }) {
         try {
             setProcesando(true);
             if (editandoId === null) {
-                const r = await fetch(API_URL, {
+                const r = await apiFetch(API_URL, {
                     method: 'POST',
                     headers: encabezadosAuth(token),
                     body: JSON.stringify(datosEnvio()),
@@ -95,7 +95,7 @@ export default function Eventos({ token }) {
                 setMensaje('Evento creado correctamente');
                 await cargar(pagina, filtroEstado);
             } else {
-                const r = await fetch(`${API_URL}${editandoId}/`, {
+                const r = await apiFetch(`${API_URL}${editandoId}/`, {
                     method: 'PATCH',
                     headers: encabezadosAuth(token),
                     body: JSON.stringify(datosEnvio()),
@@ -143,7 +143,7 @@ export default function Eventos({ token }) {
         if (!window.confirm('¿Desea eliminar este evento?')) return;
         try {
             setProcesando(true); setError(''); setMensaje('');
-            const r = await fetch(`${API_URL}${id}/`, {
+            const r = await apiFetch(`${API_URL}${id}/`, {
                 method: 'DELETE',
                 headers: { Authorization: `Token ${token}` },
             });
