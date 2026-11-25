@@ -6,7 +6,9 @@ const SECCIONES = [
     { ruta: '/',              texto: 'Resumen' },
     { ruta: '/eventos',       texto: 'Eventos' },
     { ruta: '/participantes', texto: 'Participantes' },
+    { ruta: '/inscripciones', texto: 'Inscripciones' },
     { ruta: '/proveedores',   texto: 'Proveedores' },
+    { ruta: '/presupuesto',   texto: 'Presupuesto' },
 ];
 
 export default function Menu() {

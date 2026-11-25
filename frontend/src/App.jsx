@@ -7,10 +7,13 @@ import Resumen from './components/Resumen';
 import Eventos from './components/Eventos';
 import Participantes from './components/Participantes';
 import Proveedores from './components/Proveedores';
+import InscripcionesPagina from './pages/InscripcionesPagina';
+import PresupuestoPagina from './pages/PresupuestoPagina';
 
 /**
  * App — define las rutas de la SPA.
  * /login es pública; el resto pasa por RutaProtegida y usa el Layout con el menú.
+ * Cinco módulos: eventos, participantes, inscripciones, proveedores y presupuesto.
  */
 export default function App() {
     const { token } = useAuth();
@@ -25,6 +28,8 @@ export default function App() {
                     <Route path="eventos" element={<Eventos token={token} />} />
                     <Route path="participantes" element={<Participantes token={token} />} />
                     <Route path="proveedores" element={<Proveedores token={token} />} />
+                    <Route path="inscripciones" element={<InscripcionesPagina />} />
+                    <Route path="presupuesto" element={<PresupuestoPagina />} />
                 </Route>
             </Route>
 
