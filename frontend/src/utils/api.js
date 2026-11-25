@@ -75,6 +75,24 @@ export async function obtenerMensajeError(respuesta, porDefecto) {
     }
 }
 
+/**
+ * Trae todos los registros de un listado paginado (para llenar selectores).
+ * Recorre las páginas que devuelve Django: { resultados, total_paginas }.
+ */
+export async function obtenerTodos(url) {
+    let pagina = 1, total = 1, todos = [];
+    do {
+        const separador = url.includes('?') ? '&' : '?';
+        const r = await apiFetch(`${url}${separador}page=${pagina}`);
+        if (!r.ok) throw new Error(await obtenerMensajeError(r, 'No se pudo cargar la lista'));
+        const datos = await r.json();
+        todos = todos.concat(datos.resultados ?? datos);
+        total = datos.total_paginas ?? 1;
+        pagina++;
+    } while (pagina <= total);
+    return todos;
+}
+
 /** Formatea una fecha ISO a formato legible */
 export function formatearFecha(valor) {
     if (!valor) return 'Sin indicar';
