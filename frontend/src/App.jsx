@@ -1,48 +1,34 @@
-import { useState } from 'react';
+import { Navigate, Route, Routes } from 'react-router-dom';
+import { useAuth } from './context/AuthContext';
 import Login from './components/Login';
-import Menu from './components/Menu';
+import Layout from './components/Layout';
+import RutaProtegida from './components/RutaProtegida';
 import Resumen from './components/Resumen';
 import Eventos from './components/Eventos';
 import Participantes from './components/Participantes';
 import Proveedores from './components/Proveedores';
 
 /**
- * App — coordina autenticación y navegación entre secciones.
+ * App — define las rutas de la SPA.
+ * /login es pública; el resto pasa por RutaProtegida y usa el Layout con el menú.
  */
 export default function App() {
-    const [token, setToken] = useState('');
-    const [usuario, setUsuario] = useState('');
-    const [seccionActiva, setSeccionActiva] = useState('resumen');
-
-    function manejarLogin(nuevoToken, nombreUsuario) {
-        setToken(nuevoToken);
-        setUsuario(nombreUsuario ?? '');
-        setSeccionActiva('resumen');
-    }
-
-    function cerrarSesion() {
-        setToken('');
-        setUsuario('');
-        setSeccionActiva('resumen');
-    }
-
-    if (!token) return <Login onLogin={manejarLogin} />;
+    const { token } = useAuth();
 
     return (
-        <>
-            <Menu
-                seccionActiva={seccionActiva}
-                onCambiarSeccion={setSeccionActiva}
-                usuario={usuario}
-                onCerrarSesion={cerrarSesion}
-            />
-            <main className="container-xl py-4 px-3 px-md-4">
-                {seccionActiva === 'resumen'       && <Resumen       token={token} />}
-                {seccionActiva === 'eventos'       && <Eventos        token={token} />}
-                {seccionActiva === 'participantes' && <Participantes  token={token} />}
-                {seccionActiva === 'proveedores'   && <Proveedores    token={token} />}
-            </main>
-        </>
+        <Routes>
+            <Route path="/login" element={<Login />} />
+
+            <Route element={<RutaProtegida />}>
+                <Route element={<Layout />}>
+                    <Route index element={<Resumen token={token} />} />
+                    <Route path="eventos" element={<Eventos token={token} />} />
+                    <Route path="participantes" element={<Participantes token={token} />} />
+                    <Route path="proveedores" element={<Proveedores token={token} />} />
+                </Route>
+            </Route>
+
+            <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
     );
 }
-
