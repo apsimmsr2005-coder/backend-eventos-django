@@ -1,16 +1,22 @@
 import { useState } from 'react';
+import { Navigate, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { API_BASE } from '../utils/api';
 
 const TOKEN_URL = `${API_BASE}/token/`;
 
 /**
- * Login — solo gestiona la autenticación.
- * Devuelve el token a App mediante la prop onLogin.
+ * Login — obtiene el token desde Django y lo guarda en el AuthContext.
+ * Si ya hay sesión, redirige al dashboard.
  */
-export default function Login({ onLogin }) {
+export default function Login() {
+    const { token, login } = useAuth();
+    const navigate = useNavigate();
     const [credenciales, setCredenciales] = useState({ username: '', password: '' });
     const [autenticando, setAutenticando] = useState(false);
     const [error, setError] = useState('');
+
+    if (token) return <Navigate to="/" replace />;
 
     function manejarCambio(e) {
         setCredenciales({ ...credenciales, [e.target.name]: e.target.value });
@@ -36,7 +42,8 @@ export default function Login({ onLogin }) {
             });
             if (!respuesta.ok) throw new Error('Usuario o contraseña incorrectos');
             const datos = await respuesta.json();
-            onLogin(datos.token, credenciales.username);
+            login(datos.token, credenciales.username);
+            navigate('/', { replace: true });
         } catch (err) {
             setError(
                 err.message === 'Failed to fetch'
