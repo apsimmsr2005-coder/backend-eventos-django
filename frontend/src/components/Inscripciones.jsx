@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { API_BASE, encabezadosAuth, obtenerMensajeError, formatearFecha } from '../utils/api';
+import { API_BASE, apiFetch, encabezadosAuth, obtenerMensajeError, formatearFecha } from '../utils/api';
 
 const PARTICIPANTES_URL = `${API_BASE}/participantes/`;
 
@@ -47,20 +47,20 @@ export default function Inscripciones({ evento, token, onCerrar }) {
     }
 
     async function obtenerInscripciones(pag = 1) {
-        const r = await fetch(`${urlInscripciones}?page=${pag}`, {
+        const r = await apiFetch(`${urlInscripciones}?page=${pag}`, {
             headers: { Authorization: `Token ${token}` },
         });
-        if (!r.ok) throw new Error('No se pudieron cargar las inscripciones');
+        if (!r.ok) throw new Error(await obtenerMensajeError(r, 'No se pudieron cargar las inscripciones'));
         return r.json();
     }
 
     async function obtenerTodosParticipantes() {
         let pag = 1, total = 1, todos = [];
         do {
-            const r = await fetch(`${PARTICIPANTES_URL}?page=${pag}`, {
+            const r = await apiFetch(`${PARTICIPANTES_URL}?page=${pag}`, {
                 headers: { Authorization: `Token ${token}` },
             });
-            if (!r.ok) throw new Error('No se pudieron cargar los participantes');
+            if (!r.ok) throw new Error(await obtenerMensajeError(r, 'No se pudieron cargar los participantes'));
             const datos = await r.json();
             todos = [...todos, ...(datos.resultados ?? datos)];
             total = datos.total_paginas ?? 1;
@@ -94,7 +94,7 @@ export default function Inscripciones({ evento, token, onCerrar }) {
         if (!seleccionado) { setError('Seleccione un participante'); return; }
         try {
             setProcesando(true);
-            const r = await fetch(`${API_BASE}/inscripciones/`, {
+            const r = await apiFetch(`${API_BASE}/inscripciones/`, {
                 method: 'POST',
                 headers: encabezadosAuth(token),
                 body: JSON.stringify({ evento: evento.id, participante: Number(seleccionado) }),

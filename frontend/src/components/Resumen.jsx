@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { API_BASE } from '../utils/api';
+import { API_BASE, apiFetch, obtenerMensajeError } from '../utils/api';
 
 /**
  * Resumen — dashboard con estadísticas generales del sistema.
@@ -17,10 +17,10 @@ export default function Resumen({ token }) {
         try {
             setCargando(true);
             setError('');
-            const respuesta = await fetch(`${API_BASE}/reportes/resumen/`, {
+            const respuesta = await apiFetch(`${API_BASE}/reportes/resumen/`, {
                 headers: { Authorization: `Token ${token}` },
             });
-            if (!respuesta.ok) throw new Error(`Error HTTP: ${respuesta.status}`);
+            if (!respuesta.ok) throw new Error(await obtenerMensajeError(respuesta, 'No se pudo cargar el resumen'));
             setDatos(await respuesta.json());
         } catch (err) {
             setError(err.message);

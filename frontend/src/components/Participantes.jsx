@@ -1,6 +1,6 @@
 /** Módulo de Participantes — CRUD completo + paginación */
 import { useEffect, useState } from 'react';
-import { API_BASE, encabezadosAuth, obtenerMensajeError } from '../utils/api';
+import { API_BASE, apiFetch, encabezadosAuth, obtenerMensajeError } from '../utils/api';
 
 const API_URL = `${API_BASE}/participantes/`;
 
@@ -22,10 +22,10 @@ export default function Participantes({ token }) {
     async function cargar(pag) {
         try {
             setCargando(true); setError('');
-            const r = await fetch(`${API_URL}?page=${pag}`, {
+            const r = await apiFetch(`${API_URL}?page=${pag}`, {
                 headers: { Authorization: `Token ${token}` },
             });
-            if (!r.ok) throw new Error(`Error HTTP: ${r.status}`);
+            if (!r.ok) throw new Error(await obtenerMensajeError(r, 'No se pudieron cargar los participantes'));
             const datos = await r.json();
             setParticipantes(datos.resultados ?? datos);
             setTotalPaginas(datos.total_paginas ?? 1);
@@ -57,7 +57,7 @@ export default function Participantes({ token }) {
         try {
             setProcesando(true);
             if (editandoId === null) {
-                const r = await fetch(API_URL, {
+                const r = await apiFetch(API_URL, {
                     method: 'POST',
                     headers: encabezadosAuth(token),
                     body: JSON.stringify(formulario),
@@ -66,7 +66,7 @@ export default function Participantes({ token }) {
                 await cargar(pagina);
                 setMensaje('Participante creado correctamente');
             } else {
-                const r = await fetch(`${API_URL}${editandoId}/`, {
+                const r = await apiFetch(`${API_URL}${editandoId}/`, {
                     method: 'PATCH',
                     headers: encabezadosAuth(token),
                     body: JSON.stringify(formulario),
@@ -101,7 +101,7 @@ export default function Participantes({ token }) {
         if (!window.confirm('¿Desea eliminar este participante?')) return;
         try {
             setProcesando(true); setError(''); setMensaje('');
-            const r = await fetch(`${API_URL}${id}/`, {
+            const r = await apiFetch(`${API_URL}${id}/`, {
                 method: 'DELETE',
                 headers: { Authorization: `Token ${token}` },
             });
