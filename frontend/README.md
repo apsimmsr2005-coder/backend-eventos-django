@@ -1,16 +1,30 @@
-# React + Vite
+# Frontend · Sistema de Gestión de Eventos
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Interfaz web en React que consume la API REST del backend Django de este repositorio.
 
-Currently, two official plugins are available:
+**Tecnologías:** React, Vite, React Router y Bootstrap 5.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Ejecución rápida
 
-## React Compiler
+Requiere Node.js 20.19 o superior y el backend corriendo en `http://127.0.0.1:8000`.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```bash
+npm install
+cp .env.example .env
+npm run dev
+```
 
-## Expanding the ESLint configuration
+Abrir `http://localhost:5173`.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Scripts
+
+| Comando | Descripción |
+|---|---|
+| `npm run dev` | Servidor de desarrollo con recarga automática |
+| `npm run build` | Genera la versión de producción en `dist/` (no se versiona) |
+| `npm run preview` | Sirve localmente la versión generada por `build` |
+
+## Más información
+
+- Instalación completa, configuración de CORS, usuarios de prueba y limitaciones: sección 17 del [README principal](../README.md).
+- Matriz de pantallas y endpoints, permisos, escenarios manuales y capturas: [docs/FRONTEND.md](../docs/FRONTEND.md).

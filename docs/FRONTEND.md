@@ -88,3 +88,75 @@ Relaciona cada acción de la interfaz con la solicitud HTTP que envía a la API.
 | Paginación en al menos dos listados | Eventos, Participantes, Inscripciones, Proveedores y Presupuesto | `page` |
 
 Los filtros, la búsqueda, el orden y la paginación se envían siempre al backend; el frontend no filtra los datos localmente.
+
+## 2. Matriz de permisos y escenarios manuales
+
+### 2.1 Permisos por perfil
+
+Los aplica el backend en cada endpoint; el frontend solo muestra el mensaje que corresponde. Ocultar un botón no reemplaza la validación del servidor.
+
+| Módulo | Administrador (`admin_demo`) | Organizador (`organizador_demo`) | Consulta (`consulta_demo`) |
+|---|---|---|---|
+| Resumen | Ver | Ver | Ver |
+| Eventos | Ver, crear, editar, eliminar | Ver, crear, editar, eliminar | Solo ver |
+| Participantes | Ver, crear, editar, eliminar | Solo ver | Solo ver |
+| Inscripciones | Ver, inscribir, cancelar/reactivar, eliminar | Solo ver | Solo ver |
+| Proveedores | Ver, crear, editar, eliminar | Ver, crear, editar, eliminar | Solo ver |
+| Presupuesto | Ver, contratar, editar monto, eliminar | Ver, contratar, editar monto, eliminar | Solo ver |
+
+| Situación | Respuesta de la API | Comportamiento del frontend |
+|---|---|---|
+| Sin token o token inválido/revocado | 401 | Cierra la sesión y redirige a `/login` con aviso |
+| Perfil sin permiso para la operación | 403 | Muestra "Su perfil no tiene permiso para esta operación." |
+| Ruta privada sin sesión | — | `RutaProtegida` redirige a `/login` sin llamar a la API |
+
+### 2.2 Escenarios manuales
+
+Ejecutados con el backend (`runserver`) y el frontend (`npm run dev`) en local, con los datos de `seed_demo`.
+
+| # | Escenario | Perfil | Pasos | Resultado esperado | Resultado obtenido | Captura |
+|---|---|---|---|---|---|---|
+| 1 | Inicio de sesión correcto | Administrador | Abrir `/login`, ingresar usuario y contraseña válidos | Redirige a `/`, el menú muestra el usuario y carga el resumen | ✅ | `02-dashboard.png` |
+| 2 | Inicio de sesión incorrecto | — | Ingresar una contraseña incorrecta | Mensaje de credenciales incorrectas; permanece en `/login` | ✅ | `01-login.png` |
+| 3 | Ruta protegida sin sesión | — | Sin sesión, escribir `localhost:5173/eventos` en la barra de direcciones | Redirige a `/login` | ✅ | — |
+| 4 | Navegación y persistencia de sesión | Administrador | Recorrer los 6 enlaces del menú y presionar F5 en uno de ellos | La URL cambia sin recargar la página; tras F5 la sesión continúa | ✅ | `03` a `07` |
+| 5 | Crear registro | Administrador | En Eventos, completar el formulario con datos válidos y guardar | Mensaje de éxito; el evento aparece en la lista | ✅ | `08-formulario-crear.png` |
+| 6 | Validación de datos | Administrador | Crear un evento con cupo 0 o fecha pasada | Mensaje de validación; no se guarda | ✅ | `10-error-validacion.png` |
+| 7 | Editar con formulario precargado | Administrador | En Participantes, presionar Editar, cambiar el correo y guardar | El formulario se llena con los datos actuales; se guarda el cambio | ✅ | `09-formulario-editar.png` |
+| 8 | Eliminar con confirmación y conflicto | Administrador | Eliminar un evento que tiene inscripciones activas | Pide confirmación; luego muestra el mensaje 409 y el evento no se borra | ✅ | — |
+| 9 | Filtros combinables y paginación | Administrador | En Inscripciones, filtrar por estado y por evento a la vez; usar Anterior/Siguiente | Solo aparecen las coincidencias; la paginación avanza y retrocede | ✅ | `05-inscripciones.png` |
+| 10 | Búsqueda y ordenamiento | Administrador | En Eventos, buscar una palabra del nombre y ordenar por presupuesto (mayor a menor) | Solo aparecen coincidencias, ordenadas por presupuesto | ✅ | `03-eventos.png` |
+| 11 | Acceso denegado (403) | Consulta y Organizador | Con `consulta_demo`, crear un participante; con `organizador_demo`, inscribir a alguien | En ambos casos: "Su perfil no tiene permiso para esta operación." | ✅ | `11-error-403.png` |
+| 12 | Cierre de sesión y token inválido (401) | Administrador | a) Cerrar sesión y volver a `/eventos`. b) Iniciar sesión, cambiar el token en `localStorage` por `abc` y presionar F5 | a) Redirige a `/login`. b) Redirige a `/login` con el aviso de sesión expirada | ✅ | `12-sesion-expirada.png` |
+
+
+En **Resultado obtenido** se marca ✅ si coincide con lo esperado o ❌ con una nota si no.
+
+## 3. Capturas
+
+Guardadas en `docs/capturas/`.
+
+### 3.1 Inicio de sesión
+![Login](capturas/01-login.png)
+
+### 3.2 Dashboard
+![Resumen](capturas/02-dashboard.png)
+
+### 3.3 Módulos
+![Eventos](capturas/03-eventos.png)
+![Participantes](capturas/04-participantes.png)
+![Inscripciones](capturas/05-inscripciones.png)
+![Proveedores](capturas/06-proveedores.png)
+![Presupuesto](capturas/07-presupuesto.png)
+
+### 3.4 Formularios
+![Formulario de creación](capturas/08-formulario-crear.png)
+![Formulario de edición precargado](capturas/09-formulario-editar.png)
+
+### 3.5 Errores
+![Error de validación](capturas/10-error-validacion.png)
+![Acceso denegado 403](capturas/11-error-403.png)
+![Sesión expirada 401](capturas/12-sesion-expirada.png)
+
+### 3.6 Vista en celular
+![Vista móvil](capturas/13-movil.png)
