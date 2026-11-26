@@ -1,6 +1,6 @@
-# Sistema de Gestión de Eventos (Backend)
+# Sistema de Gestión de Eventos 
 
-API REST para administrar eventos, participantes, inscripciones, proveedores y presupuesto. Desarrollada con Python, Django y Django REST Framework, con MySQL como base de datos y autenticación por tokens.
+API REST para administrar eventos, participantes, inscripciones, proveedores y presupuesto. Desarrollada con Python, Django y Django REST Framework, con MySQL como base de datos y autenticación por tokens. Incluye un frontend en React (sección 17).
 
 ## 1. Planteamiento del problema
 
@@ -154,6 +154,10 @@ Los listados son paginados y admiten filtros, por ejemplo `/api/eventos/?estado=
 
 ## 13. Pruebas automatizadas
 
+Antes de correr es necesario ejecutar el siguiente comando en MySQL:
+GRANT ALL PRIVILEGES ON test_gestion_eventos.* TO 'eventos_app'@'localhost';
+FLUSH PRIVILEGES;
+
 ```bash
 python manage.py test tests -v 2
 ```
@@ -172,9 +176,9 @@ En la carpeta `postman/` están la colección (`gestion_eventos.postman_collecti
 
 | Integrante | Módulos a cargo |
 |---|---|
-| Integrante A | `eventos`, `presupuesto` |
-| Integrante B | `participantes`, `inscripciones` |
-| Integrante C | `proveedores`, seguridad (roles y tokens) |
+| Alanis Lemaitre Fallas | `eventos`, `presupuesto` |
+| Antony Simms Rodríguez | `participantes`, `inscripciones` |
+| Melany Salazar Castillo | `proveedores`, seguridad (roles y tokens) |
 
 El código se revisó de forma cruzada mediante pull requests.
 
@@ -183,3 +187,94 @@ El código se revisó de forma cruzada mediante pull requests.
 - `mysqlclient` requiere Python 3.12 o 3.13 en Windows. En Linux necesita `libmysqlclient-dev` y `pkg-config` instalados antes de `pip install`.
 - Las pruebas y la API están validadas solo con MySQL 8.x.
 - La colección de Postman deja en la base los datos que crea (con sufijo `run_id`); se recomienda ejecutarla en una base de pruebas.
+
+## 17. Frontend (React + Vite)
+
+Aplicación SPA en `frontend/` que consume esta misma API. Construida con React, Vite, React Router y Bootstrap 5.
+
+### 17.1 Requisitos
+
+- Node.js 20.19 o superior (incluye npm).
+- El backend corriendo en `http://127.0.0.1:8000` (secciones 6 a 10).
+
+### 17.2 Instalación y configuración
+
+```bash
+cd frontend
+npm install
+cp .env.example .env
+```
+
+`frontend/.env` tiene una sola variable:
+
+| Variable | Valor por defecto | Descripción |
+|---|---|---|
+| `VITE_API_URL` | `/api` | URL base de la API. Si no se define, el código usa `/api`. |
+
+No contiene secretos. El archivo `.env` real no se sube al repositorio.
+
+### 17.3 Ejecución (dos terminales)
+
+| Terminal | Carpeta | Comando |
+|---|---|---|
+| 1 · Backend | raíz del proyecto (con el entorno virtual activo) | `python manage.py runserver` |
+| 2 · Frontend | `frontend/` | `npm run dev` |
+
+Abrir `http://localhost:5173`.
+
+### 17.4 Comunicación con la API y CORS
+
+En desarrollo, Vite actúa como **proxy**: toda petición que empieza con `/api` se reenvía a `http://127.0.0.1:8000` (ver `frontend/vite.config.js`). Para el navegador, el frontend y la API están en el mismo origen (`localhost:5173`), por lo que **no se necesita configurar CORS en Django**.
+
+Si se quisiera apuntar el frontend directo al backend (`VITE_API_URL=http://127.0.0.1:8000/api`), habría que instalar y configurar `django-cors-headers` para permitir el origen `http://localhost:5173`. Esta configuración no se incluye porque el proxy la hace innecesaria.
+
+### 17.5 Usuarios de prueba (ficticios)
+
+Los crea `python manage.py seed_demo` con las contraseñas definidas en el `.env` del backend:
+
+| Usuario | Rol | Qué puede hacer en la interfaz |
+|---|---|---|
+| `admin_demo` | Administrador | Todas las operaciones |
+| `organizador_demo` | Organizador | Gestiona eventos, proveedores y presupuesto; solo consulta participantes e inscripciones |
+| `consulta_demo` | Consulta | Solo lectura; al intentar modificar recibe un mensaje 403 |
+
+### 17.6 Pantallas y rutas
+
+| Ruta | Pantalla |
+|---|---|
+| `/login` | Inicio de sesión (pública) |
+| `/` | Resumen (dashboard con indicadores) |
+| `/eventos` | Eventos: CRUD, filtro por estado, búsqueda y ordenamiento |
+| `/participantes` | Participantes: CRUD y paginación |
+| `/inscripciones` | Inscripciones: filtros combinables, inscribir, cancelar/reactivar |
+| `/proveedores` | Proveedores: CRUD y paginación |
+| `/presupuesto` | Presupuesto: filtros combinables, contratar, editar monto |
+
+Todas las rutas excepto `/login` están protegidas: sin sesión redirigen al login.
+
+### 17.7 Estructura
+
+```
+frontend/src/
+├── main.jsx            # BrowserRouter + AuthProvider
+├── App.jsx             # Definición de rutas
+├── context/            # AuthContext: sesión compartida (token y usuario)
+├── utils/api.js        # URL base, apiFetch (token + manejo de 401) y mensajes de error
+├── components/         # Layout, Menu, RutaProtegida, Paginacion y módulos
+└── pages/              # Pantallas de Inscripciones y Presupuesto
+```
+
+### 17.8 Autenticación y manejo de errores
+
+- El login obtiene el token desde `POST /api/token/` y lo guarda en `localStorage`, por lo que recargar la página no cierra la sesión.
+- **Cerrar sesión** llama a `POST /api/logout/`: el backend **elimina el token**, que queda revocado en el servidor. Después se limpia el navegador.
+- Si cualquier petición recibe **401**, la sesión se cierra y se redirige al login con un aviso.
+- Los errores **403** muestran "Su perfil no tiene permiso para esta operación". También se muestran mensajes claros para 400, 404, 409 y fallos de red.
+- Los permisos los aplica Django: ocultar o mostrar botones no reemplaza la validación del servidor.
+
+### 17.9 Limitaciones del frontend
+
+- El token se guarda en `localStorage`; en un entorno de producción convendría una cookie `HttpOnly` para reducir el riesgo ante ataques XSS.
+- Los tokens de DRF no expiran por tiempo: solo se invalidan al cerrar sesión.
+- La configuración está pensada para desarrollo local con el proxy de Vite; no se incluye despliegue a producción.
+- Los selectores de eventos, participantes y proveedores cargan todos los registros recorriendo la paginación, lo que es adecuado para volúmenes pequeños.
